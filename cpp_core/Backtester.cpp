@@ -3,8 +3,8 @@
 #include <algorithm>
 
 BacktestResult Backtester::run(
-    const Eigen::MatrixXd& historical_prices,
-    const Eigen::VectorXd& weights,
+    Eigen::MatrixXd historical_prices,
+    Eigen::VectorXd weights,
     double risk_free_rate)
 {
     BacktestResult result;
@@ -22,8 +22,8 @@ BacktestResult Backtester::run(
         }
     }
 
-    // Portfolio daily return is dot product of weights and asset returns
-    Eigen::VectorXd port_daily_returns = weights.transpose() * daily_returns;
+    // Portfolio daily return is matrix product of transpose(returns) and weights (N_obs-1 x 1)
+    Eigen::VectorXd port_daily_returns = daily_returns.transpose() * weights;
 
     // Simulate portfolio value over time
     double initial_value = 10000.0;
@@ -57,7 +57,7 @@ BacktestResult Backtester::run(
     // Calculate annualized Sharpe ratio
     double mean_daily_return = port_daily_returns.mean();
     Eigen::VectorXd centered = port_daily_returns.array() - mean_daily_return;
-    double variance = (centered.transpose() * centered) / (port_daily_returns.size() - 1);
+    double variance = centered.squaredNorm() / (port_daily_returns.size() - 1.0);
     double std_dev = std::sqrt(variance);
     
     // Annualize (multiply by sqrt(252))

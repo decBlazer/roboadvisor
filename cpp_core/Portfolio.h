@@ -8,6 +8,9 @@ struct Asset {
     std::string symbol;
     double expected_return;
     double volatility;
+
+    Asset(std::string s = "", double e = 0.0, double v = 0.0)
+        : symbol(std::move(s)), expected_return(e), volatility(v) {}
 };
 
 class Portfolio {

@@ -14,8 +14,8 @@ public:
     // historical_prices: N_Assets x N_Observations
     // weights: 1 x N_Assets
     static BacktestResult run(
-        const Eigen::MatrixXd& historical_prices,
-        const Eigen::VectorXd& weights,
+        Eigen::MatrixXd historical_prices,
+        Eigen::VectorXd weights,
         double risk_free_rate = 0.02
     );
 };
