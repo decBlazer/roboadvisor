@@ -12,9 +12,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(eigen)
 
-add_library(roboadvisor_engine STATIC Portfolio.cpp Optimizer.cpp Backtester.cpp)
-target_link_libraries(roboadvisor_engine PUBLIC Eigen3::Eigen)
-
 FetchContent_Declare(
   pybind11
   GIT_REPOSITORY https://github.com/pybind/pybind11.git
@@ -22,7 +19,10 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pybind11)
 
-pybind11_add_module(roboadvisor_core Bindings.cpp)
-target_link_libraries(roboadvisor_core PRIVATE roboadvisor_engine)
+pybind11_add_module(roboadvisor_core Bindings.cpp Portfolio.cpp Optimizer.cpp Backtester.cpp)
+target_link_libraries(roboadvisor_core PRIVATE Eigen3::Eigen)
 
-# pybind11_add_module(roboadvisor_engine Bindings.cpp Portfolio.cpp Optimizer.cpp Backtester.cpp)
+# Standalone C++ Test Executable
+add_executable(run_cpp_tests test_optimizer.cpp Portfolio.cpp Optimizer.cpp Backtester.cpp)
+target_link_libraries(run_cpp_tests PRIVATE Eigen3::Eigen)
+

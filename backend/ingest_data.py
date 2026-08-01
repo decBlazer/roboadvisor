@@ -6,36 +6,42 @@ CACHE_DIR = "data_cache"
 
 def get_historical_data(tickers: list, start_date: str, end_date: str) -> pd.DataFrame:
     """
-    Fetches historical adjusted close prices for a list of tickers.
+    Fetches historical close prices for a list of tickers.
     Caches the data locally as CSV files to avoid yfinance rate limits.
     """
     if not os.path.exists(CACHE_DIR):
         os.makedirs(CACHE_DIR)
 
-    prices_dict = {}
+    tickers = sorted(list(set(tickers)))
+    cache_key = "_".join(tickers) + f"_{start_date}_{end_date}.csv"
+    cache_file = os.path.join(CACHE_DIR, cache_key)
+    
+    if os.path.exists(cache_file):
+        print(f"Loading cached data from {cache_file}...")
+        prices_df = pd.read_csv(cache_file, index_col=0, parse_dates=True)
+        return prices_df
 
-    for ticker in tickers:
-        cache_file = os.path.join(CACHE_DIR, f"{ticker}_{start_date}_{end_date}.csv")
-        
-        if os.path.exists(cache_file):
-            print(f"Loading {ticker} from cache...")
-            df = pd.read_csv(cache_file, index_col=0, parse_dates=True)
-            prices_dict[ticker] = df['Adj Close']
-        else:
-            print(f"Downloading {ticker} from Yahoo Finance...")
-            data = yf.download(ticker, start=start_date, end=end_date, progress=False)
-            if not data.empty:
-                data.to_csv(cache_file)
-                prices_dict[ticker] = data['Adj Close']
+    print(f"Downloading {tickers} from Yahoo Finance...")
+    try:
+        data = yf.download(tickers, start=start_date, end=end_date, progress=False)
+        if isinstance(data.columns, pd.MultiIndex):
+            if 'Close' in data.columns.levels[0]:
+                prices_df = data['Close']
+            elif 'Adj Close' in data.columns.levels[0]:
+                prices_df = data['Adj Close']
             else:
-                print(f"Warning: No data found for {ticker}")
+                prices_df = data.iloc[:, :len(tickers)]
+        else:
+            prices_df = data.get('Close', data.get('Adj Close', data))
+            
+        if not prices_df.empty:
+            prices_df = prices_df[tickers].dropna()
+            prices_df.to_csv(cache_file)
+            return prices_df
+    except Exception as e:
+        print(f"Error downloading market data: {e}")
 
-    if not prices_dict:
-        return pd.DataFrame()
-
-    prices_df = pd.DataFrame(prices_dict)
-    prices_df.dropna(inplace=True)
-    return prices_df
+    return pd.DataFrame()
 
 if __name__ == "__main__":
     # Example usage: fetching data for a standard diversified portfolio
