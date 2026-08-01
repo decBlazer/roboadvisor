@@ -13,7 +13,8 @@ WORKDIR /app
 COPY cpp_core /app/cpp_core
 
 # Build C++ pybind11 module
-RUN mkdir -p /app/cpp_core/build && \
+RUN rm -rf /app/cpp_core/build && \
+    mkdir -p /app/cpp_core/build && \
     cd /app/cpp_core/build && \
     cmake .. && \
     cmake --build . --config Release

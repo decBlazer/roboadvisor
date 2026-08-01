@@ -1,0 +1,12 @@
+.git
+.gitignore
+.venv
+node_modules
+.next
+cpp_core/build
+data_cache
+__pycache__
+*.pyc
+*.pyd
+*.so
+*.db
