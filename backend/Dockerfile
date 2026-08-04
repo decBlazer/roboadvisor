@@ -9,21 +9,18 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy C++ core source code
+# Copy C++ core source code and Python backend code
 COPY cpp_core /app/cpp_core
+COPY backend /app/backend
 
 # Build C++ pybind11 module
 RUN rm -rf /app/cpp_core/build && \
     mkdir -p /app/cpp_core/build && \
     cd /app/cpp_core/build && \
     cmake .. && \
-    cmake --build . --config Release
-
-# Copy C++ compiled module to backend directory or python path
-RUN cp /app/cpp_core/build/*.so /app/backend/ 2>/dev/null || cp /app/cpp_core/build/Release/*.so /app/backend/ 2>/dev/null || true
-
-# Copy Python backend code
-COPY backend /app/backend
+    cmake --build . --config Release && \
+    cp /app/cpp_core/build/*.so /app/backend/ 2>/dev/null || \
+    cp /app/cpp_core/build/Release/*.so /app/backend/ 2>/dev/null || true
 
 WORKDIR /app/backend
 

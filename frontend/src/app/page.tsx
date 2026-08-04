@@ -67,7 +67,7 @@ export default function Home() {
   const [rebalanceData, setRebalanceData] = useState<RebalanceResult | null>(null);
   const [, setCheckingRebalance] = useState<boolean>(false);
 
-  const API_URL = "http://localhost:8000";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const handleAssessment = async (e: React.FormEvent) => {
     e.preventDefault();
