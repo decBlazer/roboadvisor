@@ -26,9 +26,12 @@ PYBIND11_MODULE(roboadvisor_core, m) {
         .def_readonly("portfolio_value_over_time", &BacktestResult::portfolio_value_over_time);
 
     // Expose Optimizer methods using NumPy buffer maps to ensure safe C/Fortran array memory mapping
-    m.def("maximize_sharpe_ratio", [](const std::vector<Asset>& assets, py::array_t<double> cov_arr, double risk_free_rate) {
+    m.def("maximize_sharpe_ratio", [](const std::vector<Asset>& assets, py::array_t<double, py::array::c_style | py::array::forcecast> cov_arr, double risk_free_rate) {
         py::buffer_info buf = cov_arr.request();
         if (buf.ndim != 2) throw std::runtime_error("Covariance matrix must be 2D");
+        if (buf.shape[0] != static_cast<py::ssize_t>(assets.size()) || buf.shape[1] != static_cast<py::ssize_t>(assets.size())) {
+            throw std::runtime_error("Covariance matrix dimensions must match asset count");
+        }
         Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> cov_map(
             static_cast<const double*>(buf.ptr), buf.shape[0], buf.shape[1]);
         Eigen::MatrixXd cov = cov_map;
@@ -36,7 +39,7 @@ PYBIND11_MODULE(roboadvisor_core, m) {
         return std::vector<double>(w.data(), w.data() + w.size());
     }, py::arg("assets"), py::arg("cov_matrix"), py::arg("risk_free_rate") = 0.02);
 
-    m.def("calculate_covariance_matrix", [](py::array_t<double> returns_arr) {
+    m.def("calculate_covariance_matrix", [](py::array_t<double, py::array::c_style | py::array::forcecast> returns_arr) {
         py::buffer_info buf = returns_arr.request();
         if (buf.ndim != 2) throw std::runtime_error("Returns matrix must be 2D");
         Eigen::Map<const Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>> ret_map(
@@ -53,7 +56,7 @@ PYBIND11_MODULE(roboadvisor_core, m) {
     }, py::arg("historical_returns"));
 
     // Expose Backtester method
-    m.def("run_backtest", [](py::array_t<double> prices_arr, py::array_t<double> weights_arr, double risk_free_rate) {
+    m.def("run_backtest", [](py::array_t<double, py::array::c_style | py::array::forcecast> prices_arr, py::array_t<double, py::array::c_style | py::array::forcecast> weights_arr, double risk_free_rate) {
         py::buffer_info p_buf = prices_arr.request();
         py::buffer_info w_buf = weights_arr.request();
         
